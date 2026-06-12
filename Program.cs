@@ -376,10 +376,60 @@ namespace KarataConsoleApp
 
             var longestSequence = user1.Skip(endIndexUser1 - maxLength + 1).Take(maxLength).ToArray();
             Console.WriteLine("Longest common browsing history: " + string.Join(", ", longestSequence));
+
+            Console.WriteLine("===========================================================================================");
+
+            Console.WriteLine("8. Most common page sequence (3-page path)** Given (user, page, timestamp) tuples, find the most common ordered 3-page sequence across users (contiguous per user).");
+
+              var visits = new List<Visit>
+            {
+                new("u1", "/home",     1),
+                new("u1", "/pricing",  2),
+                new("u1", "/cart",     3),
+                new("u1", "/checkout", 4),
+ 
+                new("u2", "/home",     5),
+                new("u2", "/pricing",  6),
+                new("u2", "/cart",     7),
+ 
+                new("u3", "/blog",     1),
+                new("u3", "/home",     2),
+                new("u3", "/pricing",  3),
+                new("u3", "/cart",     4),
+ 
+                new("u4", "/home",     9),
+                new("u4", "/about",   10),
+            };
+
+            var sequenceCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var visitsByUser = visits.GroupBy(v => v.User).ToDictionary(g => g.Key, g => g.OrderBy(v => v.Timestamp).ToList());
+
+            foreach (var userVisits in visitsByUser.Values)
+            {
+                for (int i = 0; i < userVisits.Count - 2; i++)
+                {
+                    var sequence = $"{userVisits[i].Page} -> {userVisits[i + 1].Page} -> {userVisits[i + 2].Page}";
+                    if (sequenceCounts.ContainsKey(sequence))
+                    {
+                        sequenceCounts[sequence]++;
+                    }
+                    else
+                    {
+                        sequenceCounts[sequence] = 1;
+                    }
+                }
+            }
+
+            var mostCommonSequence = sequenceCounts.OrderByDescending(kvp => kvp.Value).First().Key;
+            Console.WriteLine("Most common 3-page sequence: " + mostCommonSequence);
+
+             Console.WriteLine("===========================================================================================");
         }
     }
 
 
     public record BadgeRecord(string Employee, string Room, string Action, string Time); // Action: "enter"/"exit", Time: "HHMM"
+    public record Visit(string User, string Page, int Timestamp);
+
 
 }
