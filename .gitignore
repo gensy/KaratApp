@@ -1,0 +1,24 @@
+﻿# Build results
+bin/
+obj/
+
+# Visual Studio cache/options directory
+.vs/
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# NuGet Packet Cache
+.nuget/
+
+# IDE specific files
+*.sln
+*.csproj
