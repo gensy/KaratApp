@@ -423,13 +423,565 @@ namespace KarataConsoleApp
             var mostCommonSequence = sequenceCounts.OrderByDescending(kvp => kvp.Value).First().Key;
             Console.WriteLine("Most common 3-page sequence: " + mostCommonSequence);
 
+            Console.WriteLine("===========================================================================================");
+
+            Console.WriteLine("9. Shared courses for every student pair** Input: (student, course) pairs. For **every pair of students**, output the courses both take.");
+
+            var enrollments = new List<(string, string)>
+            {
+                ("Ada",     "CS101"),
+                ("Ada",     "CS229"),
+                ("Charlie", "CS101"),
+                ("Charlie", "MATH51"),
+                ("Bob",     "MATH51"),
+                ("Bob",     "CS229"),
+                ("Bob",     "CS101"),
+                ("Dana",    "ART10"),
+            };
+
+            var coursesByStudent = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            enrollments.ForEach(enrollment =>
+            {
+                if(coursesByStudent.ContainsKey(enrollment.Item1))
+                {
+                    coursesByStudent[enrollment.Item1].Add(enrollment.Item2);
+                }
+                else
+                {
+                    coursesByStudent[enrollment.Item1] = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { enrollment.Item2 };
+                }
+            });
+
+            var students = coursesByStudent.Keys.ToList();
+            for(int i = 0; i < students.Count; i++)
+            {
+                for(int j = i + 1; j < students.Count; j++)
+                {
+                    var student1 = students[i];
+                    var student2 = students[j];
+                    var sharedCourses = coursesByStudent[student1].Intersect(coursesByStudent[student2]);
+                    Console.WriteLine($"{student1} & {student2}: {string.Join(", ", sharedCourses)}");
+                }
+            }
+
+            Console.WriteLine("===========================================================================================");
+
+             Console.WriteLine("10 - Midpoint course in a prerequisite chain** Given prerequisite pairs forming a single linear chain `[[\"Foundations\",\"Core\"],[\"Core\",\"Advanced\"]]`, find the course at the halfway point (round down for even length).");
+
+              var pairs1 = new List<string[]>
+            {
+                new[] { "Foundations", "Core" },
+                new[] { "Core", "Advanced" },
+            };
+            
+            var next = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var hasPrereq = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+ 
+            foreach (var p in pairs1)
+            {
+                next[p[0]] = p[1];
+                hasPrereq.Add(p[1]);
+            }
+ 
+            string start1 = next.Keys.First(c => !hasPrereq.Contains(c));
+ 
+            var chain = new List<string> { start1 };
+            while (next.TryGetValue(chain[^1], out var following))
+                chain.Add(following);
+ 
+
+            Console.WriteLine("Midpoint course: " + chain[(chain.Count - 1) / 2]);
+
+            Console.WriteLine("===========================================================================================");
+
+            Console.WriteLine("11. Find a word in a grid (straight lines only)**Does a word appear in a 2D char grid going only left→right or top→bottom (no bends)?");
+
+            var grid = new[]
+            {
+                new[] { 'c', 'c', 'x', 't', 'i', 'b' },
+                new[] { 'c', 'c', 'a', 't', 'n', 'i' },
+                new[] { 'a', 'c', 'n', 'n', 't', 't' },
+                new[] { 't', 'c', 's', 'i', 'p', 't' },
+                new[] { 'a', 'o', 'o', 'o', 'a', 'a' },
+                new[] { 'o', 'a', 'a', 'a', 'o', 'o' },
+                new[] { 'k', 'a', 'i', 'c', 'k', 'i' },
+            };
+
+            string word = "cat";
+            bool found = false;
+            // Check rows
+            for (int i = 0; i < grid.Length; i++)
+            {
+                var rowString = new string(grid[i]);
+                if (rowString.Contains(word))
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            // Check columns
+            if (!found)
+            {
+                for (int j = 0; j < grid[0].Length; j++)
+                {
+                    var columnString = new string(grid.Select(row => row[j]).ToArray());
+                    if (columnString.Contains(word))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            Console.WriteLine($"Word \"{word}\" found in grid: {found}");
+
+            Console.WriteLine("===========================================================================================");
+
+            Console.WriteLine("12. Number of islands (connected 1s)** Count groups of connected 1s in a binary grid (4-directional).");
+
+             var gridIslands = new[]
+            {
+                new[] { 1, 1, 0, 0, 0 },
+                new[] { 1, 1, 0, 0, 0 },
+                new[] { 0, 0, 1, 0, 0 },
+                new[] { 0, 0, 0, 1, 1 },
+            };
+
+            int CountIslands(int[][] grid)
+            {
+                int count = 0;
+                int rows = grid.Length;
+                int cols = grid[0].Length;
+                var visited = new bool[rows, cols];
+
+                void DFS(int r, int c)
+                {
+                    if (r < 0 || r >= rows || c < 0 || c >= cols || grid[r][c] == 0 || visited[r, c])
+                        return;
+
+                    visited[r, c] = true;
+
+                    DFS(r - 1, c); // up
+                    DFS(r + 1, c); // down
+                    DFS(r, c - 1); // left
+                    DFS(r, c + 1); // right
+                }
+
+                for (int i = 0; i < rows; i++)
+                {
+                    for (int j = 0; j < cols; j++)
+                    {
+                        if (grid[i][j] == 1 && !visited[i, j])
+                        {
+                            count++;
+                            DFS(i, j);
+                        }
+                    }
+                }
+
+                return count;
+            }
+
+            int islandCount = CountIslands(gridIslands);
+            Console.WriteLine($"Number of islands: {islandCount}");
+
              Console.WriteLine("===========================================================================================");
+
+             Console.WriteLine("*13. Rectangle of 0s in a grid of 1s** A grid of 1s contains exactly one rectangle of 0s. Return its top-left and bottom-right coordinates.");
+
+             var gridRectangle = new[]
+            {
+                new[] { 1, 1, 1, 1, 1, 1 },
+                new[] { 1, 1, 0, 0, 1, 1 },
+                new[] { 1, 1, 0, 0, 1, 1 },
+                new[] { 1, 1, 0, 0, 1, 1 },
+                new[] { 1, 1, 1, 1, 1, 1 },
+            };
+
+            ((int Row, int Col) TopLeft, (int Row, int Col) BottomRight) FindRectangle(int[][] grid)
+            {
+                int rows = grid.Length;
+                int cols = grid[0].Length;
+                (int Row, int Col) topLeft = (-1, -1);
+                (int Row, int Col) bottomRight = (-1, -1);
+
+                for (int i = 0; i < rows; i++)
+                {
+                    for (int j = 0; j < cols; j++)
+                    {
+                        if (grid[i][j] == 0)
+                        {
+                            if (topLeft.Row == -1)
+                            {
+                                topLeft = (i, j);
+                            }
+                            bottomRight = (i, j);
+                        }
+                    }
+                }
+
+                return (topLeft, bottomRight);
+            }   
+
+            var (topLeft, bottomRight) = FindRectangle(gridRectangle);
+            Console.WriteLine($"Top-left: ({topLeft.Row}, {topLeft.Col}), Bottom-right: ({bottomRight.Row}, {bottomRight.Col})");
+
+             Console.WriteLine("===========================================================================================");
+
+            Console.WriteLine("14. Matrix rotation / zero-out** Rotate an N×N matrix 90° in place, or: if a cell is 0, zero its entire row and column.");
+
+             var a = new[]
+            {
+                new[] { 1, 2, 3 },
+                new[] { 4, 5, 6 },
+                new[] { 7, 8, 9 },
+            };
+
+            void Rotate90(int[][] matrix)
+            {
+                int n = matrix.Length;
+                for (int i = 0; i < n / 2; i++)
+                {
+                    for (int j = i; j < n - i - 1; j++)
+                    {
+                        int temp = matrix[i][j];
+                        matrix[i][j] = matrix[n - j - 1][i];
+                        matrix[n - j - 1][i] = matrix[n - i - 1][n - j - 1];
+                        matrix[n - i - 1][n - j - 1] = matrix[j][n - i - 1];
+                        matrix[j][n - i - 1] = temp;
+                    }
+                }
+            }   
+
+            Rotate90(a);
+            Console.WriteLine("Rotated matrix:");   
+            foreach (var row in a)
+                Console.WriteLine(string.Join(" ", row));
+
+             Console.WriteLine("===========================================================================================");
+
+             Console.WriteLine("15. Valid sentence checker** A sentence is valid if: starts with a capital, ends with `.?!`, single spaces, no consecutive separators, numbers don't start with 0 (varies). Return true/false given the rule list.");
+
+              var tests = new (string Sentence, bool Expected)[]
+            {
+                ("The quick brown fox jumps over the lazy dog.", true),
+                ("She has 7 cats, 2 dogs, and 1 parrot!",        true),
+                ("Is this valid?",                               true),
+                ("Exactly 0 problems here.",                     true),
+ 
+                ("the sentence starts lowercase.",               false), // rule 1
+                ("No terminator at the end",                     false), // rule 2
+                ("Double  space inside.",                        false), // rule 3
+                ("Consecutive,, separators.",                    false), // rule 4
+                ("Ends oddly!.",                                 false), // rule 4
+                ("Costs 050 dollars.",                           false), // rule 5
+                ("Tabs\tare not allowed.",                       false), // rule 6
+                ("",                                             false),
+            };
+
+            foreach (var (sentence, expected) in tests)
+            {
+                bool isValid = IsValidSentence(sentence);
+                Console.WriteLine($"\"{sentence}\" -> {isValid} (expected: {expected})");
+            }
+
+            bool IsValidSentence(string s)
+            {
+                if (string.IsNullOrEmpty(s))
+                    return false;
+
+                if (!char.IsUpper(s[0]))
+                    return false;
+
+                if (!".!?".Contains(s[^1]))
+                    return false;
+
+                for (int i = 0; i < s.Length - 1; i++)
+                {
+                    if (s[i] == ' ' && s[i + 1] == ' ')
+                        return false;
+                    if (",.!?;".Contains(s[i]) && ",.!?;".Contains(s[i + 1]))
+                        return false;
+                }
+
+                var words = s.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var word in words)
+                {
+                    if (int.TryParse(word, out int num) && word.StartsWith("0"))
+                        return false;
+                }
+
+                if (s.Contains('\t'))
+                    return false;
+
+                return true;
+            }
+
+             Console.WriteLine("===========================================================================================");
+
+             Console.WriteLine("16. String/sentence reversal preserving punctuation positions** Reverse word order in a sentence, or reverse letters while keeping punctuation fixed in place.");
+
+            var sentence1 = "Hello, world! This is a test.";
+
+            string ReverseWords(string s)
+            {
+                var words = s.Split(' ');
+                Array.Reverse(words);
+                return string.Join(' ', words);
+            }
+
+            string ReverseLettersPreservingPunctuation(string s)
+            {
+                var chars = s.ToCharArray();
+                int left = 0, right = chars.Length - 1;
+
+                while (left < right)
+                {
+                    if (!char.IsLetter(chars[left]))
+                    {
+                        left++;
+                    }
+                    else if (!char.IsLetter(chars[right]))
+                    {
+                        right--;
+                    }
+                    else
+                    {
+                        var temp = chars[left];
+                        chars[left] = chars[right];
+                        chars[right] = temp;
+                        left++;
+                        right--;
+                    }
+                }
+
+                return new string(chars);
+            }
+
+            Console.WriteLine("Original: " + sentence1);
+            Console.WriteLine("Reversed words: " + ReverseWords(sentence1));
+            Console.WriteLine("Reversed letters (preserving punctuation): " + ReverseLettersPreservingPunctuation(sentence1));
+
+            Console.WriteLine("===========================================================================================");
+
+            Console.WriteLine("17. Wrap text to width N (greedy word wrap)** Given words and a max line width, produce lines without breaking words.");
+
+              var words = "The quick brown fox jumps over the lazy dog near the riverbank".Split(' ');
+
+            List<string> WrapText(string[] words, int maxWidth)
+            {
+                var lines = new List<string>();
+                var currentLine = new List<string>();
+                int currentLength = 0;
+
+                foreach (var word in words)
+                {
+                    if (currentLength + word.Length + currentLine.Count > maxWidth)
+                    {
+                        lines.Add(string.Join(' ', currentLine));
+                        currentLine.Clear();
+                        currentLength = 0;
+                    }
+                    currentLine.Add(word);
+                    currentLength += word.Length;
+                }
+
+                if (currentLine.Count > 0)
+                {
+                    lines.Add(string.Join(' ', currentLine));
+                }
+
+                return lines;
+            }   
+
+            var wrappedLines = WrapText(words, 20);
+            Console.WriteLine("Wrapped text:"); 
+
+            foreach (var line in wrappedLines)
+                Console.WriteLine(line);
+
+             Console.WriteLine("===========================================================================================");
+
+             Console.WriteLine("*18. Basic calculator / expression evaluation** Evaluate `\"2+3*4\"` (no parens), then with parentheses as the follow-up.");
+
+             string expression = "2+3*4";
+
+            int EvaluateExpression(string expr)
+            {
+                var tokens = new List<string>();
+                int numberBuffer = 0;
+                bool bufferingNumber = false;
+
+                foreach (var ch in expr)
+                {
+                    if (char.IsDigit(ch))
+                    {
+                        numberBuffer = numberBuffer * 10 + (ch - '0');
+                        bufferingNumber = true;
+                    }
+                    else
+                    {
+                        if (bufferingNumber)
+                        {
+                            tokens.Add(numberBuffer.ToString());
+                            numberBuffer = 0;
+                            bufferingNumber = false;
+                        }
+                        tokens.Add(ch.ToString());
+                    }
+                }
+
+                if (bufferingNumber)
+                {
+                    tokens.Add(numberBuffer.ToString());
+                }
+
+                // First pass: handle multiplication
+                var stack = new Stack<string>();
+                for (int i = 0; i < tokens.Count; i++)
+                {
+                    if (tokens[i] == "*")
+                    {
+                        int left = int.Parse(stack.Pop());
+                        int right = int.Parse(tokens[++i]);
+                        stack.Push((left * right).ToString());
+                    }
+                    else
+                    {
+                        stack.Push(tokens[i]);
+                    }
+                }
+
+                // Second pass: handle addition
+                var resultStack = new Stack<string>(stack.Reverse());
+                int result = int.Parse(resultStack.Pop());
+
+                while (resultStack.Count > 0)
+                {
+                    string op = resultStack.Pop();
+                    int nextNum = int.Parse(resultStack.Pop());
+
+                    if (op == "+")
+                    {
+                        result += nextNum;
+                    }
+                }
+
+                return result;
+            }
+
+            int resultExpr = EvaluateExpression(expression);
+            Console.WriteLine($"Expression: {expression} = {resultExpr}");
+            Console.WriteLine("===========================================================================================");    
+            
+            Console.WriteLine("19. Meeting calendar / free time slots** Given each person's busy intervals and working hours, find common free slots of at least K minutes for a meeting.");
+
+              var busyPerPerson = new List<List<(string, string)>>
+            {
+                new() { ("0900", "1030"), ("1200", "1300"), ("1600", "1800") }, // person A
+                new() { ("1000", "1130"), ("1230", "1430"), ("1530", "1630") }, // person B
+            };
+ 
+            var workingHours = new List<(string, string)>
+            {
+                ("0900", "2000"), // person A
+                ("1000", "1830"), // person B
+            };
+
+            int K = 30; // meeting duration in minutes
+
+            List<(string, string)> FindFreeSlots(List<List<(string, string)>> busyPerPerson, List<(string, string)> workingHours, int K)
+            {
+                var allBusy = new List<(DateTime Start, DateTime End)>();
+
+                for (int i = 0; i < busyPerPerson.Count; i++)
+                {
+                    var personBusy = busyPerPerson[i];
+                    var (workStartStr, workEndStr) = workingHours[i];
+                    var workStart = DateTime.ParseExact(workStartStr, "HHmm", null);
+                    var workEnd = DateTime.ParseExact(workEndStr, "HHmm", null);
+
+                    allBusy.Add((workStart, workStart)); // start of working hours
+                    allBusy.Add((workEnd, workEnd));     // end of working hours
+
+                    foreach (var (startStr, endStr) in personBusy)
+                    {
+                        var start = DateTime.ParseExact(startStr, "HHmm", null);
+                        var end = DateTime.ParseExact(endStr, "HHmm", null);
+                        allBusy.Add((start, end));
+                    }
+                }
+
+                allBusy = allBusy.OrderBy(b => b.Start).ThenBy(b => b.End).ToList();
+
+                var mergedBusy = new List<(DateTime Start, DateTime End)>();
+                foreach (var interval in allBusy)
+                {
+                    if (mergedBusy.Count == 0 || mergedBusy[^1].End < interval.Start)
+                    {
+                        mergedBusy.Add(interval);
+                    }
+                    else
+                    {
+                        mergedBusy[^1] = (mergedBusy[^1].Start, mergedBusy[^1].End > interval.End ? mergedBusy[^1].End : interval.End);
+                    }
+                }
+
+                var freeSlots = new List<(string Start, string End)>();
+                for (int i = 1; i < mergedBusy.Count; i++)
+                {
+                    var gapStart = mergedBusy[i - 1].End;
+                    var gapEnd = mergedBusy[i].Start;
+                    if ((gapEnd - gapStart).TotalMinutes >= K)
+                    {
+                        freeSlots.Add((gapStart.ToString("HHmm"), gapEnd.ToString("HHmm")));
+                    }
+                }
+
+                return freeSlots;
+            }
+
+            var freeTimeSlots = FindFreeSlots(busyPerPerson, workingHours, K);
+            Console.WriteLine("Available time slots for meeting:");
+            foreach (var (start, end) in freeTimeSlots)
+                Console.WriteLine($"- {start} to {end}");
+
+             Console.WriteLine("===========================================================================================");
+
+             Console.WriteLine("20. Sparse vector dot product** Two very large vectors that are mostly zeros. Design a representation and compute the dot product efficiently.");
+
+              var a1 = new double[] { 0, 2, 0, 0, 3, 0, 0, 0, 1, 0 };
+              var b2 = new double[] { 1, 4, 0, 0, 5, 0, 2, 0, 0, 0 };
+
+            double SparseDotProduct(double[] a, double[] b)
+            {
+                var nonZeroA = a.Select((value, index) => (Value: value, Index: index)).Where(x => x.Value != 0).ToList();
+                var nonZeroB = b.Select((value, index) => (Value: value, Index: index)).Where(x => x.Value != 0).ToDictionary(x => x.Index, x => x.Value);
+
+                double dotProduct = 0;
+                foreach (var (valueA, indexA) in nonZeroA)
+                {
+                    if (nonZeroB.TryGetValue(indexA, out var valueB))
+                    {
+                        dotProduct += valueA * valueB;
+                    }
+                }
+
+                return dotProduct;
+            }
+
+            double dotProductResult = SparseDotProduct(a1, b2);
+            Console.WriteLine($"Dot product of sparse vectors: {dotProductResult}");
+
+           Console.WriteLine("===========================================================================================");
+
         }
-    }
+
 
 
     public record BadgeRecord(string Employee, string Room, string Action, string Time); // Action: "enter"/"exit", Time: "HHMM"
     public record Visit(string User, string Page, int Timestamp);
 
 
-}
+}}
